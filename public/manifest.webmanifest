@@ -1,0 +1,14 @@
+{
+  "name": "יין בעיר · השוואת מחירים",
+  "short_name": "יין בעיר",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#efe9e2",
+  "theme_color": "#680007",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/logo-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

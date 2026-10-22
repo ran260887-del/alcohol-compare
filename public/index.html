@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>יין בעיר · השוואת מחירים</title>
+<meta name="description" content="השוואת מחירי משקאות בבנא, היבואן, הטורקי, אליאסי, בית היין ודרך היין">
+<meta name="theme-color" content="#680007">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Assistant:wght@400;600;700;800&display=swap">
+<style>
+/* יין בעיר: wine-burgundy band over a warm cork-beige page, taken from the logo */
+:root {
+  --wine: #680007;        /* logo ring + lettering */
+  --cork: #cec4b8;        /* logo fill */
+  --bg: #efe9e2; --surface: #fbf8f4; --fg: #2a1a1b; --muted: #6e5d5b; --line: #ddd3c8;
+  --accent: #680007; --on-accent: #fbf8f4; --accent-soft: #f1e2df; --link: #8a1c22;
+  --band: #680007; --on-band: #f3ece4; --band-muted: #d9c3bd; --price: #680007;
+  --good: #2f6b3f; --good-soft: #e3efe4; --warn: #8a5a00; --bad: #a8261f; --bad-soft: #f6e0dc;
+  --font-display: "Suez One", "Assistant", "Arial Hebrew", serif;
+  --font-body: "Assistant", "Segoe UI", "Arial Hebrew", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #170d0e; --surface: #241718; --fg: #f1e9e2; --muted: #b9a7a1; --line: #3d2a2b;
+    --accent: #cec4b8; --on-accent: #4a0005; --accent-soft: #3a2224; --link: #e7b3ad;
+    --band: #4a0005; --on-band: #f1e9e2; --band-muted: #c9aaa5; --price: #e9ddd2;
+    --good: #7fc792; --good-soft: #1d3324; --warn: #e3b866; --bad: #f08a7e; --bad-soft: #3d1d1b; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header.band { background: var(--band); color: var(--on-band); padding-block: max(20px, env(safe-area-inset-top, 0px)) 22px; }
+header.band .wrap { flex-direction: row; align-items: center; gap: 16px; }
+header.band img { width: 76px; height: 76px; border-radius: 50%; flex: none; box-shadow: 0 0 0 3px var(--cork); }
+header.band h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(26px, 5.5vw, 36px); margin: 0; line-height: 1.15; }
+header.band p { margin: 4px 0 0; color: var(--band-muted); max-width: 60ch; font-size: 15px; }
+@media (max-width: 460px) { header.band img { width: 60px; height: 60px; } header.band p { font-size: 14px; } }
+main.gutter { padding-block: 22px max(40px, env(safe-area-inset-bottom, 0px)); }
+.search { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+#q { flex: 1 1 240px; min-width: 0; font: inherit; font-size: 18px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+#q:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid transparent; }
+#go { background: var(--accent); color: var(--on-accent); font-weight: 700; padding: 12px 22px; font-size: 17px; }
+#go:disabled { opacity: .6; cursor: progress; }
+.storepick { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 15px; }
+.storepick label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.storepick input { accent-color: var(--accent); width: 16px; height: 16px; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.chips .lbl { color: var(--muted); font-size: 14px; }
+.chip { background: var(--bg); border: 1px solid var(--line); color: var(--fg); padding: 4px 12px; border-radius: 999px; font-size: 14px; }
+.chip:hover { border-color: var(--link); }
+.notice { background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; font-size: 15px; }
+.loading { color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--wine); box-shadow: 0 0 0 2px var(--cork); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+#results { display: flex; flex-direction: column; gap: 14px; }
+.summary { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.summary h2 { font-family: var(--font-display); font-weight: 400; font-size: 22px; margin: 0; }
+.summary .meta { color: var(--muted); font-size: 14px; }
+.save { color: var(--good); font-weight: 700; }
+.strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.st { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.st b { font-size: 15px; }
+.st .v { font-variant-numeric: tabular-nums; }
+.st.ok .v { color: var(--good); font-weight: 700; }
+.st.none .v { color: var(--muted); }
+.st.fail { background: var(--bad-soft); }
+.st.fail .v { color: var(--bad); }
+.st a { color: var(--link); font-size: 13px; }
+.list { display: flex; flex-direction: column; gap: 10px; }
+.item { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: center; }
+.item.best { border-color: var(--good); box-shadow: 0 0 0 1px var(--good) inset; }
+.item .name { font-weight: 700; font-size: 17px; min-width: 0; overflow-wrap: anywhere; }
+.item .store { color: var(--muted); font-size: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.item .store .sn { color: var(--fg); font-weight: 600; }
+.item .price { color: var(--price); font-family: var(--font-display); font-size: 26px; font-variant-numeric: tabular-nums; grid-row: 1 / span 2; grid-column: 2; text-align: end; white-space: nowrap; }
+.item .per, .item .was { display: block; font-family: var(--font-body); font-size: 13px; color: var(--muted); }
+.item .was { text-decoration: line-through; }
+.pill { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+.pill.best, .pill.exact { background: var(--good-soft); color: var(--good); }
+.pill.close { background: var(--accent-soft); color: var(--warn); }
+.pill.out { background: var(--bad-soft); color: var(--bad); }
+.item .foot { grid-column: 1 / -1; display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.item a { color: var(--link); font-weight: 600; text-decoration: none; }
+.item a:hover { text-decoration: underline; }
+details.other { color: var(--muted); }
+details.other summary { cursor: pointer; font-weight: 600; }
+details.other ul { margin: 8px 0 0; padding-inline-start: 20px; }
+details.other a { color: var(--link); }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; }
+@media (max-width: 460px) {
+  .item { grid-template-columns: 1fr; }
+  .item .price { grid-row: auto; grid-column: 1; text-align: start; }
+}
+</style>
+</head>
+<body>
+<header class="band gutter">
+  <div class="wrap">
+    <img src="/logo.png" alt="יין בעיר" width="76" height="76">
+    <div>
+      <h1>השוואת מחירים</h1>
+      <p>כתבו שם של בקבוק כמו שאתם אומרים אותו. אנחנו בודקים שש חנויות במקביל ומסדרים מהזול ליקר.</p>
+    </div>
+  </div>
+</header>
+<main class="gutter">
+<div class="wrap">
+<form class="search" id="form" autocomplete="off">
+    <div class="row">
+      <input id="q" type="search" placeholder="למשל: ייגרמייסטר ליטר" aria-label="שם המוצר" enterkeyhint="search">
+      <button id="go" type="submit">השווה מחירים</button>
+    </div>
+    <div class="storepick" id="storepick" aria-label="חנויות לחיפוש"></div>
+    <div class="chips" id="chips"><span class="lbl">נסו:</span></div>
+  </form>
+
+  <div id="notice" class="notice" hidden></div>
+  <section id="results" aria-live="polite"></section>
+
+  <footer>יין בעיר · המחירים נקראים מאתרי החנויות בזמן החיפוש ונשמרים לחצי שעה. מחיר בסניף, מחיר מועדון ודמי משלוח יכולים להיות שונים, אז כדאי לאשר באתר לפני הזמנה.</footer>
+</div>
+</main>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const STORES = [
+    ["bana", "בנא משקאות"], ["importer", "היבואן"], ["turki", "משקאות הטורקי"],
+    ["eliasi", "אליאסי"], ["winehouse", "בית היין"], ["wineroute", "דרך היין"],
+  ];
+  const EXAMPLES = ["ייגרמייסטר ליטר", "גלנפידיך 12", "אבסולוט ליטר", "בומביי ספייר ליטר", "ג'וני ווקר בלאק"];
+  const store = (k, v) => { try { return v === undefined ? JSON.parse(localStorage.getItem(k)) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } };
+
+  // store checkboxes
+  let picked = store("stores"); if (!Array.isArray(picked)) picked = STORES.map((s) => s[0]);
+  for (const [id, name] of STORES) {
+    const l = document.createElement("label"); const c = document.createElement("input");
+    c.type = "checkbox"; c.id = "st-" + id; c.checked = picked.includes(id);
+    c.onchange = () => store("stores", STORES.filter((s) => $("st-" + s[0]).checked).map((s) => s[0]));
+    l.append(c, document.createTextNode(name)); $("storepick").appendChild(l);
+  }
+
+  function renderChips() {
+    $("chips").querySelectorAll(".chip").forEach((c) => c.remove());
+    const recent = store("recent") || [];
+    [...new Set([...recent, ...EXAMPLES])].slice(0, 6).forEach((t) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = t;
+      b.onclick = () => { $("q").value = t; run(); }; $("chips").appendChild(b);
+    });
+  }
+  const remember = (q) => store("recent", [q, ...(store("recent") || []).filter((x) => x !== q)].slice(0, 4));
+  const fmt = (n) => "₪" + Number(n).toLocaleString("he-IL", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const link = (href, text) => { const a = el("a", "", text); a.href = href; a.target = "_blank"; a.rel = "noopener"; return a; };
+  function notice(t) { $("notice").hidden = !t; $("notice").textContent = t || ""; }
+
+  function render(d) {
+    const box = $("results"); box.innerHTML = "";
+    const items = d.items || [];
+    const exact = items.filter((x) => x.match === "exact");
+
+    const head = el("div", "summary");
+    head.appendChild(el("h2", "", items.length ? d.query : `לא נמצאו התאמות ל"${d.query}"`));
+    const meta = el("div", "meta");
+    if (exact.length > 1) {
+      const diff = Math.round((exact[exact.length - 1].price - exact[0].price) * 100) / 100;
+      meta.append(`${new Set(exact.map((x) => x.store)).size} חנויות · הפרש בין הזול ליקר: `, el("span", "save", fmt(diff)));
+    }
+    head.appendChild(meta); box.appendChild(head);
+
+    // per-store status
+    const strip = el("div", "strip");
+    for (const s of d.stores) {
+      const mine = items.filter((x) => x.store_id === s.id);
+      const best = mine.filter((x) => x.match === "exact");
+      const show = best.length ? best : mine;
+      const state = s.status === "fail" || s.status === "blocked" ? "fail" : show.length ? "ok" : "none";
+      const card = el("div", "st " + state);
+      card.appendChild(el("b", "", s.name));
+      card.appendChild(el("span", "v", show.length ? "מ-" + fmt(Math.min(...show.map((x) => x.price))) + (best.length ? "" : " (חלקית)") + (s.source === "google" ? " · לפי גוגל" : "") : state === "fail" ? (s.status === "blocked" ? "האתר חוסם בדיקה אוטומטית" : "האתר לא ענה") : "אין התאמה"));
+      if (state !== "ok") card.appendChild(link(s.search_url, "חפשו באתר"));
+      strip.appendChild(card);
+    }
+    box.appendChild(strip);
+
+    const list = el("div", "list");
+    items.forEach((it, i) => {
+      const card = el("article", "item" + (i === 0 && it.match === "exact" ? " best" : ""));
+      const price = el("div", "price", fmt(it.price));
+      if (it.regular_price > it.price) price.appendChild(el("span", "was", fmt(it.regular_price) + " לפני הנחה"));
+      if (it.size_ml) price.appendChild(el("span", "per", fmt(Math.round(it.price / it.size_ml * 1000) / 10) + ' ל-100 מ"ל'));
+      const st = el("div", "store"); st.appendChild(el("span", "sn", it.store));
+      if (i === 0 && exact.length > 1 && it.match === "exact") st.appendChild(el("span", "pill best", "הכי זול"));
+      st.appendChild(el("span", "pill " + (it.match === "exact" ? "exact" : "close"), it.match === "exact" ? "התאמה מלאה" : (it.note || "התאמה חלקית")));
+      if (it.regular_price > it.price) st.appendChild(el("span", "pill close", "במבצע"));
+      if (it.in_stock === false) st.appendChild(el("span", "pill out", "אזל מהמלאי"));
+      if (it.via_google) st.appendChild(el("span", "pill close", "לפי גוגל, ייתכן שלא מעודכן"));
+      const foot = el("div", "foot"); foot.appendChild(link(it.url, "לדף המוצר ←"));
+      card.append(el("div", "name", it.name), price, st, foot);
+      list.appendChild(card);
+    });
+    box.appendChild(list);
+
+    if (d.other && d.other.length) {
+      const det = el("details", "other"); det.appendChild(el("summary", "", `גרסאות אחרות של המותג (${d.other.length})`));
+      const ul = el("ul");
+      d.other.forEach((o) => { const li = el("li"); li.append(`${o.store} · `, link(o.url, o.name), ` · ${fmt(o.price)}`); ul.appendChild(li); });
+      det.appendChild(ul); box.appendChild(det);
+    }
+  }
+
+  let busy = false;
+  async function run() {
+    const q = $("q").value.trim(); if (!q || busy) return;
+    const chosen = STORES.filter((s) => $("st-" + s[0]).checked).map((s) => s[0]);
+    if (!chosen.length) { notice("בחרו לפחות חנות אחת."); return; }
+    busy = true; $("go").disabled = true; notice("");
+    $("results").innerHTML = '<div class="loading"><span class="dot"></span>בודק מחירים בחנויות…</div>';
+    try {
+      const res = await fetch("/api/search?q=" + encodeURIComponent(q) + "&stores=" + chosen.join(","));
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      remember(q); renderChips(); render(data);
+      history.replaceState(null, "", "?q=" + encodeURIComponent(q));
+    } catch (e) {
+      $("results").innerHTML = "";
+      notice("החיפוש נכשל. בדקו את החיבור לאינטרנט ונסו שוב.");
+    } finally { busy = false; $("go").disabled = false; }
+  }
+
+  $("form").addEventListener("submit", (e) => { e.preventDefault(); $("q").blur(); run(); });
+  renderChips();
+  const initial = new URLSearchParams(location.search).get("q");
+  if (initial) { $("q").value = initial; run(); }
+})();
+</script>
+</body>
+</html>

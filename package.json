@@ -1,0 +1,14 @@
+{
+  "name": "alcohol-price-compare",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "השוואת מחירי אלכוהול בין חנויות בישראל",
+  "scripts": {
+    "test": "node test/match.test.mjs && node test/woo-html.test.mjs && node test/e2e-mock.test.mjs && node test/google-fallback.test.mjs && node test/sitemap.test.mjs",
+    "try": "node test/try.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
