@@ -43,9 +43,12 @@ export default async (req) => {
     out.google_configured = Boolean(process.env.GOOGLE_API_KEY && process.env.GOOGLE_CX);
     // shape checks only; the key itself is never shown
     const { key, cx } = googleCreds();
+    const cxOk = /^[a-z0-9]{10,30}$/i.test(cx) && !cx.startsWith("AIza");
     out.google_check = {
-      cx,
-      cx_looks_right: /^[a-z0-9]{10,30}$/i.test(cx),
+      // never echo a value that might be a key
+      cx: cxOk ? cx : "(hidden: " + cx.length + " characters)",
+      cx_looks_right: cxOk,
+      cx_is_actually_an_api_key: cx.startsWith("AIza"),
       key_starts_with_AIza: key.startsWith("AIza"),
       key_length: key.length,
       key_length_ok: key.length === 39,

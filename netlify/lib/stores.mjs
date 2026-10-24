@@ -195,6 +195,24 @@ function sitemapCatalog(origin) {
   };
 }
 
+// Konimbo shops (Wine & More): server-rendered search page.
+function konimbo(origin) {
+  return async (term) => {
+    const html = await (await get(`${origin}/search?q=${encodeURIComponent(term)}`, { accept: "text/html" })).text();
+    const out = [];
+    for (const c of html.split(/<div id="item_id_\d+"/).slice(1)) {
+      const text = (h) => decodeEntities(String(h || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+      const name = text((c.match(/<p class='title[^']*'>([\s\S]*?)<\/p>/) || [])[1]);
+      const price = num(text((c.match(/<p class='price[^']*'>([\s\S]*?)<\/p>/) || [])[1]).replace(/^מחיר/, ""));
+      const orig = num(text((c.match(/<p class='origin_price[^']*'>([\s\S]*?)<\/p>/) || [])[1]));
+      const href = (c.match(/href='\s*([^'\s]+)\s*'/) || [])[1];
+      if (!name || !(price > 0)) continue;
+      out.push({ name, price, regular_price: orig > price ? orig : 0, size_ml: parseSize(name), in_stock: !/out_of_stock|אזל מהמלאי/.test(c), url: href ? origin + href : origin });
+    }
+    return out;
+  };
+}
+
 export const STORES = [
   { id: "bana", name: "בנא משקאות", site: "https://www.banamashkaot.co.il", searchUrl: (q) => `https://www.banamashkaot.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://www.banamashkaot.co.il") },
   { id: "importer", name: "היבואן", site: "https://www.the-importer.co.il", searchUrl: (q) => `https://www.the-importer.co.il/catalogsearch/result/?q=${encodeURIComponent(q)}`, search: magento("https://www.the-importer.co.il"), fallback: googleIndex("the-importer.co.il") },
@@ -202,4 +220,8 @@ export const STORES = [
   { id: "eliasi", name: "אליאסי", site: "https://www.eliasi.co.il", searchUrl: (q) => `https://www.eliasi.co.il/index.php?dir=site&page=search&q=${encodeURIComponent(q)}`, search: eliasi },
   { id: "winehouse", name: "בית היין", site: "https://winehouse.co.il", searchUrl: (q) => `https://winehouse.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://winehouse.co.il") },
   { id: "wineroute", name: "דרך היין", site: "https://www.wineroute.co.il", searchUrl: (q) => `https://www.wineroute.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://www.wineroute.co.il") },
+  { id: "drinkcenter", name: "דרינק סנטר", site: "https://www.drinkcenter.co.il", searchUrl: (q) => `https://www.drinkcenter.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://www.drinkcenter.co.il") },
+  { id: "hamesameach", name: "משקאות המשמח", site: "https://www.hamesameach.co.il", searchUrl: (q) => `https://www.hamesameach.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://www.hamesameach.co.il") },
+  { id: "alcohome", name: "אלכוהום", site: "https://alcohome.co.il", searchUrl: (q) => `https://alcohome.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://alcohome.co.il") },
+  { id: "wineandmore", name: "Wine & More", site: "https://www.wineandmore.co.il", searchUrl: (q) => `https://www.wineandmore.co.il/search?q=${encodeURIComponent(q)}`, search: konimbo("https://www.wineandmore.co.il") },
 ];

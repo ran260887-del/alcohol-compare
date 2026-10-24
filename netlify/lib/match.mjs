@@ -119,7 +119,7 @@ const BARE_SIZE = /(?:^|\s)(200|330|350|375|500|700|750|1000|1500|1750)(?=\s|$)/
 function stripSize(s) {
   return s
     .replace(new RegExp(BARE_SIZE.source, "g"), " ")
-    .replace(/\d+(?:[.,]\d+)?\s*(?:מ\s*["״']?\s*ל|מ"ל|מל|ml|מיליליטר|cl|סל|ליטר|ל['׳]|lt|ltr|l)(?![a-zא-ת])/gi, " ")
+    .replace(/\d+(?:[.,]\d+)?\s*(?:מ\s*["״'׳]{0,2}\s*ל|מ"ל|מל|ml|מיליליטר|cl|סל|ליטר|ל['׳]|lt|ltr|l)(?![a-zא-ת])/gi, " ")
     .replace(/חצי\s*ליטר|ליטר|liter|litre/gi, " ");
 }
 
