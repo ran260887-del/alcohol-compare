@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>יין בעיר · השוואת מחירים</title>
-<meta name="description" content="השוואת מחירי משקאות ב-10 חנויות משקאות בישראל">
+<meta name="description" content="השוואת מחירי משקאות ב-11 חנויות משקאות בישראל">
 <meta name="theme-color" content="#680007">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -69,7 +69,7 @@ button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid 
 .summary h2 { font-family: var(--font-display); font-weight: 400; font-size: 22px; margin: 0; }
 .summary .meta { color: var(--muted); font-size: 14px; }
 .save { color: var(--good); font-weight: 700; }
-.strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 @media (max-width: 760px) { .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .st { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -113,7 +113,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     <img src="/logo.png" alt="יין בעיר" width="76" height="76">
     <div>
       <h1>השוואת מחירים</h1>
-      <p>כתבו שם של בקבוק כמו שאתם אומרים אותו. אנחנו בודקים 10 חנויות במקביל ומסדרים מהזול ליקר.</p>
+      <p>כתבו שם של בקבוק כמו שאתם אומרים אותו. אנחנו בודקים 11 חנויות במקביל ומסדרים מהזול ליקר.</p>
     </div>
   </div>
 </header>
@@ -141,7 +141,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   const STORES = [
     ["bana", "בנא משקאות"], ["importer", "היבואן"], ["turki", "משקאות הטורקי"],
     ["eliasi", "אליאסי"], ["winehouse", "בית היין"], ["wineroute", "דרך היין"],
-    ["drinkcenter", "דרינק סנטר"], ["hamesameach", "משקאות המשמח"], ["alcohome", "אלכוהום"], ["wineandmore", "Wine & More"],
+    ["drinkcenter", "דרינק סנטר"], ["hamesameach", "משקאות המשמח"], ["alcohome", "אלכוהום"], ["wineandmore", "Wine & More"], ["naftali", "נפתלי"],
   ];
   const EXAMPLES = ["ייגרמייסטר ליטר", "גלנפידיך 12", "אבסולוט ליטר", "בומביי ספייר ליטר", "ג'וני ווקר בלאק"];
   const store = (k, v) => { try { return v === undefined ? JSON.parse(localStorage.getItem(k)) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } };

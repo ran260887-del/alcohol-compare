@@ -28,6 +28,11 @@ export const BRANDS = [
   ["glenmorangie", "גלנמורנג'י", "גלנמורנגי"],
   ["macallan", "מקאלן", "מקלאן"],
   ["chivas", "שיבס", "שיבאס"],
+  ["royal salute", "רויאל סלוט", "רויאל סאלוט"],
+  ["dalmore", "דלמור"],
+  ["balvenie", "בלוויני", "בלבני"],
+  ["glendronach", "גלנדרונאך", "גלנדרונך"],
+  ["jw", "ג'וני", "גוני"],
   ["ballantines", "בלנטיינס", "בלנטיינז"],
   ["monkey shoulder", "מאנקי שולדר", "מונקי שולדר"],
   ["laphroaig", "לפרויג"],
@@ -148,11 +153,15 @@ function lev(a, b) {
   return d[a.length][b.length];
 }
 
+// Hebrew is written with or without the vowel letters א/ו/י ("סלוט" = "סאלוט"); compare without them.
+const skeleton = (w) => w[0] + w.slice(1).replace(/[אוי]/g, "");
+
 function wordHit(q, list) {
   if (list.includes(q)) return true;
   if (q.startsWith("#")) return false;
   for (const w of list) {
     if (w.startsWith("#")) continue;
+    if (q.length >= 4 && w.length >= 3 && /[א-ת]/.test(q) && skeleton(q) === skeleton(w)) return true;
     if (q.length >= 4 && (w.startsWith(q) || q.startsWith(w) && w.length >= 4)) return true;
     if (q.length >= 5 && lev(q, w) <= (q.length >= 8 ? 2 : 1)) return true;
   }
@@ -191,11 +200,12 @@ export function compare(query, productName, productSizeMl) {
 
   // in a gift set, "+ 2 כוסות" is a count of glasses, not an age
   const realNums = packed ? extraNums.filter((x) => +x > 6) : extraNums;
-  if (realNums.length) return { match: "other", note: "גרסה אחרת (" + realNums.join(", ") + ")" };
-  if (extraWords.length) {
-    const label = extraWords.map((w) => (w.startsWith("#") ? BRANDS[+w.slice(1)][0] : w)).join(" ");
-    return { match: "other", note: "גרסה אחרת: " + label };
-  }
+  const qNums = qWords.filter((w) => /^\d+$/.test(w));
+  // A different age than the one asked for (asked 12, found 18) is another product.
+  if (realNums.length && qNums.length) return { match: "other", note: "גרסה אחרת (" + realNums.join(", ") + ")" };
+  // Otherwise extra details are a variant of what was asked: show it, labelled.
+  const label = [...realNums.map((n) => n + " שנה"), ...extraWords.map((w) => (w.startsWith("#") ? (BRANDS[+w.slice(1)][1] || BRANDS[+w.slice(1)][0]) : w))].join(" ");
+  if (label) return { match: "close", note: "גרסה: " + label };
   if (packed) return { match: "close", note: "מארז" };
   if (qSize && pSize && qSize !== pSize) return { match: "close", note: "גודל אחר" };
   if (qSize && !pSize) return { match: "close", note: "גודל לא צוין" };
@@ -218,8 +228,8 @@ export function searchTerms(query) {
   }
   const collapsed = raw.replace(/יי/g, "י").replace(/וו/g, "ו").replace(/['׳"״]/g, "");
   if (collapsed) terms.add(collapsed);
-  // longest plain word, shortened, catches spellings we do not know
-  const longest = qWords.filter((w) => !w.startsWith("#") && !/^\d+$/.test(w)).sort((a, b) => b.length - a.length)[0];
-  if (longest && longest.length >= 6) terms.add(longest.slice(0, 5));
+  // single words catch other spellings of the rest ("רויאל" finds "רויאל סאלוט")
+  const plain = raw.split(/\s+/).filter((w) => w.length >= 4 && !/^\d+$/.test(w) && !GENERIC.has(norm(w)));
+  if (plain.length > 1) plain.sort((a, b) => b.length - a.length).forEach((w) => terms.add(w));
   return [...terms].slice(0, 4);
 }
