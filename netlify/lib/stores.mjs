@@ -213,6 +213,26 @@ function konimbo(origin) {
   };
 }
 
+// Old ASP shops that expect Hebrew in the Windows-1255 code page (בית המשקאות של נפתלי).
+const cp1255 = (s) => [...s].map((ch) => { const c = ch.charCodeAt(0); return c >= 0x5d0 && c <= 0x5ea ? "%" + (c - 0x5d0 + 0xe0).toString(16).toUpperCase() : encodeURIComponent(ch); }).join("");
+function naftali(origin) {
+  return async (term) => {
+    const res = await get(`${origin}/items.asp?IsPostback=true&Qsearch=${cp1255(term)}&stype=M`, { accept: "text/html" });
+    const html = new TextDecoder("windows-1255").decode(await res.arrayBuffer());
+    const out = [], seen = new Set();
+    for (const m of html.matchAll(/<a\b[^>]*\bee_list_itemname="[^"]*"[^>]*>/g)) {
+      const attr = (k) => decodeEntities((m[0].match(new RegExp(k + "=[\"']([^\"']*)[\"']")) || [])[1] || "");
+      const id = attr("ee_list_itemid"), name = attr("ee_list_itemname").trim(), price = num(attr("ee_list_itemprice"));
+      if (!name || !(price > 0) || seen.has(id)) continue;
+      seen.add(id);
+      const reg = num((html.match(new RegExp('id="totalreg' + id + '">([\\d.,]+)')) || [])[1] || "");
+      const href = attr("href");
+      out.push({ name, price, regular_price: reg > price ? reg : 0, size_ml: parseSize(name), in_stock: true, url: href ? origin + encodeURI(href) : origin });
+    }
+    return out;
+  };
+}
+
 export const STORES = [
   { id: "bana", name: "בנא משקאות", site: "https://www.banamashkaot.co.il", searchUrl: (q) => `https://www.banamashkaot.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://www.banamashkaot.co.il") },
   { id: "importer", name: "היבואן", site: "https://www.the-importer.co.il", searchUrl: (q) => `https://www.the-importer.co.il/catalogsearch/result/?q=${encodeURIComponent(q)}`, search: magento("https://www.the-importer.co.il"), fallback: googleIndex("the-importer.co.il") },
@@ -220,6 +240,7 @@ export const STORES = [
   { id: "eliasi", name: "אליאסי", site: "https://www.eliasi.co.il", searchUrl: (q) => `https://www.eliasi.co.il/index.php?dir=site&page=search&q=${encodeURIComponent(q)}`, search: eliasi },
   { id: "winehouse", name: "בית היין", site: "https://winehouse.co.il", searchUrl: (q) => `https://winehouse.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://winehouse.co.il") },
   { id: "wineroute", name: "דרך היין", site: "https://www.wineroute.co.il", searchUrl: (q) => `https://www.wineroute.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://www.wineroute.co.il") },
+  { id: "naftali", name: "בית המשקאות של נפתלי", site: "https://www.goodwines.co.il", searchUrl: (q) => `https://www.goodwines.co.il/items.asp?IsPostback=true&Qsearch=${cp1255(q)}&stype=M`, search: naftali("https://www.goodwines.co.il") },
   { id: "drinkcenter", name: "דרינק סנטר", site: "https://www.drinkcenter.co.il", searchUrl: (q) => `https://www.drinkcenter.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://www.drinkcenter.co.il") },
   { id: "hamesameach", name: "משקאות המשמח", site: "https://www.hamesameach.co.il", searchUrl: (q) => `https://www.hamesameach.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://www.hamesameach.co.il") },
   { id: "alcohome", name: "אלכוהום", site: "https://alcohome.co.il", searchUrl: (q) => `https://alcohome.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://alcohome.co.il") },

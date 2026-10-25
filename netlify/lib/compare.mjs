@@ -1,6 +1,6 @@
 // Runs one query against all stores and returns sorted, matched offers.
 import { STORES } from "./stores.mjs";
-import { compare, searchTerms } from "./match.mjs";
+import { compare, searchTerms, parseSize } from "./match.mjs";
 
 export async function comparePrices(query, storeIds) {
   const stores = STORES.filter((s) => !storeIds || storeIds.includes(s.id));
@@ -12,12 +12,15 @@ export async function comparePrices(query, storeIds) {
     // all spellings at once; a store answers in ~1s
     if (s.searchByQuery) {
       try { for (const p of await s.searchByQuery(query)) seen.set(p.url || p.name, p); ok = 1; } catch (e) { lastError = e; }
-    } else await Promise.all(terms.map(async (t) => {
-      try {
-        for (const p of await s.search(t)) seen.set(p.url || p.name, p);
-        ok++;
-      } catch (e) { lastError = e; }
-    }));
+    } else {
+      // two spellings at once; the rest only if those found nothing (fewer requests, fewer timeouts)
+      const run = (list) => Promise.all(list.map(async (t) => {
+        try { for (const p of await s.search(t)) seen.set(p.url || p.name, p); ok++; } catch (e) { lastError = e; }
+      }));
+      await run(terms.slice(0, 2));
+      const hit = [...seen.values()].some((p) => compare(query, p.name, p.size_ml));
+      if (!hit && terms.length > 2) await run(terms.slice(2));
+    }
     let source = "store";
     if (!ok && s.fallback) {
       try { for (const p of await s.fallback(terms)) seen.set(p.url || p.name, p); ok = 1; source = "google"; }
@@ -35,6 +38,18 @@ export async function comparePrices(query, storeIds) {
   }));
 
   const all = perStore.flatMap((r) => r.offers);
+
+  // No size typed: compare like for like. Pick the usual bottle (700/750 ml, else 1 L, else the most common size)
+  // and show other sizes as partial matches, so a 200 ml bottle is not "the cheapest".
+  if (!parseSize(query)) {
+    const sizes = all.filter((o) => o.match === "exact" && o.size_ml).map((o) => o.size_ml);
+    if (new Set(sizes).size > 1) {
+      const has = (n) => sizes.includes(n);
+      const count = (n) => sizes.filter((x) => x === n).length;
+      const target = has(700) || has(750) ? [700, 750] : has(1000) ? [1000] : [[...new Set(sizes)].sort((a, b) => count(b) - count(a))[0]];
+      for (const o of all) if (o.match === "exact" && o.size_ml && !target.includes(o.size_ml)) { o.match = "close"; o.note = "גודל אחר"; }
+    }
+  }
   const rank = { exact: 0, close: 1, other: 2 };
   all.sort((a, b) => rank[a.match] - rank[b.match] || a.price - b.price);
 
