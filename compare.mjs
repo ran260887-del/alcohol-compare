@@ -1,7 +1,7 @@
 // Runs one query against all stores and returns sorted, matched offers.
 import { STORES } from "./stores.mjs";
 import { compare, searchTerms, parseSize, words } from "./match.mjs";
-import { aiClassify, aiConfigured } from "./ai.mjs";
+import { aiClassify, aiConfigured, lastAiError, usedModels } from "./ai.mjs";
 
 // Collect raw products from one store (no matching decisions yet).
 async function collect(s, query, terms) {
@@ -32,6 +32,7 @@ function withSize(query, p, base) {
 }
 
 export async function comparePrices(query, storeIds) {
+  const started = Date.now();
   const stores = STORES.filter((s) => !storeIds || storeIds.includes(s.id));
   const terms = searchTerms(query);
   const perStore = await Promise.all(stores.map((s) => collect(s, query, terms)));
@@ -41,10 +42,12 @@ export async function comparePrices(query, storeIds) {
   const shares = (name) => { const pw = words(name); return qw.some((w) => pw.includes(w) || pw.some((x) => x.length >= 4 && (x.startsWith(w) || w.startsWith(x)))); };
   const cands = [];
   for (const r of perStore) for (const p of r.products) cands.push({ r, p, rule: compare(query, p.name, p.size_ml) });
-  const forAi = cands.filter((c) => c.rule || shares(c.p.name)).slice(0, 160);
+  const forAi = cands.filter((c) => c.rule || shares(c.p.name)).slice(0, 100);
 
   let matcher = "rules";
-  const ai = aiConfigured() ? await aiClassify(query, forAi.map((c) => c.p.name)) : null;
+  // Netlify ends a request after 10 s; give Gemini only the time that is left.
+  const aiTime = Math.min(5000, 8800 - (Date.now() - started));
+  const ai = aiConfigured() && aiTime > 1200 ? await aiClassify(query, forAi.map((c) => c.p.name), { timeoutMs: aiTime }) : null;
   if (ai) {
     matcher = "ai";
     forAi.forEach((c, i) => {
@@ -79,6 +82,8 @@ export async function comparePrices(query, storeIds) {
     query,
     terms,
     matcher,
+    matcher_note: matcher === "rules" && aiConfigured() ? (lastAiError || "skipped: stores were slow") : undefined,
+    models: aiConfigured() ? usedModels() : undefined,
     checked_at: new Date().toISOString(),
     stores: perStore.map((r) => ({ id: r.store.id, name: r.store.name, status: statusOf(r), error: r.error, search_url: r.store.searchUrl(terms[0] || query) })),
     items: all.filter((o) => o.match !== "other"),
