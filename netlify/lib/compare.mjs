@@ -42,11 +42,11 @@ export async function comparePrices(query, storeIds) {
   const shares = (name) => { const pw = words(name); return qw.some((w) => pw.includes(w) || pw.some((x) => x.length >= 4 && (x.startsWith(w) || w.startsWith(x)))); };
   const cands = [];
   for (const r of perStore) for (const p of r.products) cands.push({ r, p, rule: compare(query, p.name, p.size_ml) });
-  const forAi = cands.filter((c) => c.rule || shares(c.p.name)).slice(0, 160);
+  const forAi = cands.filter((c) => c.rule || shares(c.p.name)).slice(0, 100);
 
   let matcher = "rules";
   // Netlify ends a request after 10 s; give Gemini only the time that is left.
-  const aiTime = Math.min(4000, 8500 - (Date.now() - started));
+  const aiTime = Math.min(5000, 8800 - (Date.now() - started));
   const ai = aiConfigured() && aiTime > 1200 ? await aiClassify(query, forAi.map((c) => c.p.name), { timeoutMs: aiTime }) : null;
   if (ai) {
     matcher = "ai";

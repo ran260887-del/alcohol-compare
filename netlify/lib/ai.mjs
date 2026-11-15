@@ -1,7 +1,8 @@
 // Optional smart matching with Google Gemini (free tier from Google AI Studio).
 // Set GEMINI_API_KEY in Netlify. Without it, or if Gemini fails, the rule-based matcher is used.
 
-const MODELS = () => [process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.5-flash-lite"].filter(Boolean);
+// Lightest and fastest first; if one is busy or missing, the next one is tried.
+const MODELS = () => [process.env.GEMINI_MODEL, "gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-flash-latest", "gemini-2.5-flash"].filter(Boolean);
 
 const PROMPT = (query, names) => `You match liquor products for an Israeli price-comparison site.
 The shopper searched for: "${query}"
@@ -29,7 +30,8 @@ export async function aiClassify(query, names, { timeoutMs = 4000 } = {}) {
   if (!key || !names.length) return null;
   const body = JSON.stringify({
     contents: [{ role: "user", parts: [{ text: PROMPT(query, names) }] }],
-    generationConfig: { temperature: 0, responseMimeType: "application/json" },
+    // no "thinking" step: this is a quick sorting task and speed matters
+    generationConfig: { temperature: 0, responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } },
   });
   const deadline = Date.now() + timeoutMs;
   for (const model of MODELS()) {
@@ -42,11 +44,11 @@ export async function aiClassify(query, names, { timeoutMs = 4000 } = {}) {
         body,
         signal: AbortSignal.timeout(left),
       });
-      if (res.status === 404) { lastAiError = model + ": not found"; continue; } // model name not available, try the next
-      if (!res.ok) {                     // quota or key problem: fall back to rules
+      if (!res.ok) {
         const e = await res.json().catch(() => ({}));
-        lastAiError = "Gemini " + res.status + ": " + String(e?.error?.message || e?.error?.status || "error").replace(key, "***").slice(0, 160);
-        return null;
+        lastAiError = "Gemini " + res.status + " (" + model + "): " + String(e?.error?.message || e?.error?.status || "error").replace(key, "***").slice(0, 140);
+        if (res.status === 401 || res.status === 403) return null; // key problem: no point trying other models
+        continue;                                                  // busy, missing or unsupported model: try the next one
       }
       const j = await res.json();
       const text = j?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
@@ -58,7 +60,10 @@ export async function aiClassify(query, names, { timeoutMs = 4000 } = {}) {
       }
       if (!out.size) lastAiError = "Gemini: empty answer";
       return out.size ? out : null;
-    } catch (e) { lastAiError = "Gemini: " + (e?.name === "TimeoutError" ? "timeout" : "bad answer"); return null; }
+    } catch (e) {
+      lastAiError = "Gemini (" + model + "): " + (e?.name === "TimeoutError" ? "timeout" : "bad answer");
+      if (e?.name === "TimeoutError") return null; // out of time
+    }
   }
   if (!lastAiError) lastAiError = "Gemini: no time left";
   return null;
