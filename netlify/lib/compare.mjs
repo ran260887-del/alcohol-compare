@@ -1,7 +1,7 @@
 // Runs one query against all stores and returns sorted, matched offers.
 import { STORES } from "./stores.mjs";
 import { compare, searchTerms, parseSize, words } from "./match.mjs";
-import { aiClassify, aiConfigured, lastAiError } from "./ai.mjs";
+import { aiClassify, aiConfigured, lastAiError, usedModels } from "./ai.mjs";
 
 // Collect raw products from one store (no matching decisions yet).
 async function collect(s, query, terms) {
@@ -83,6 +83,7 @@ export async function comparePrices(query, storeIds) {
     terms,
     matcher,
     matcher_note: matcher === "rules" && aiConfigured() ? (lastAiError || "skipped: stores were slow") : undefined,
+    models: aiConfigured() ? usedModels() : undefined,
     checked_at: new Date().toISOString(),
     stores: perStore.map((r) => ({ id: r.store.id, name: r.store.name, status: statusOf(r), error: r.error, search_url: r.store.searchUrl(terms[0] || query) })),
     items: all.filter((o) => o.match !== "other"),
