@@ -19,8 +19,12 @@ export function aiConfigured() {
   return Boolean(String(process.env.GEMINI_API_KEY || "").trim());
 }
 
+// Last reason Gemini was not used (Google's error text only; never the key).
+export let lastAiError = "";
+
 // Returns Map(index -> {kind, note}) or null when unavailable.
-export async function aiClassify(query, names, { timeoutMs = 5000 } = {}) {
+export async function aiClassify(query, names, { timeoutMs = 4000 } = {}) {
+  lastAiError = "";
   const key = String(process.env.GEMINI_API_KEY || "").trim();
   if (!key || !names.length) return null;
   const body = JSON.stringify({
@@ -38,8 +42,12 @@ export async function aiClassify(query, names, { timeoutMs = 5000 } = {}) {
         body,
         signal: AbortSignal.timeout(left),
       });
-      if (res.status === 404) continue; // model name not available, try the next
-      if (!res.ok) return null;          // quota or key problem: fall back to rules
+      if (res.status === 404) { lastAiError = model + ": not found"; continue; } // model name not available, try the next
+      if (!res.ok) {                     // quota or key problem: fall back to rules
+        const e = await res.json().catch(() => ({}));
+        lastAiError = "Gemini " + res.status + ": " + String(e?.error?.message || e?.error?.status || "error").replace(key, "***").slice(0, 160);
+        return null;
+      }
       const j = await res.json();
       const text = j?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
       const parsed = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
@@ -48,8 +56,10 @@ export async function aiClassify(query, names, { timeoutMs = 5000 } = {}) {
         const [i, kind, note] = row;
         if (Number.isInteger(i) && ["same", "variant", "no"].includes(kind)) out.set(i, { kind, note: String(note || "").slice(0, 60) });
       }
+      if (!out.size) lastAiError = "Gemini: empty answer";
       return out.size ? out : null;
-    } catch { return null; }
+    } catch (e) { lastAiError = "Gemini: " + (e?.name === "TimeoutError" ? "timeout" : "bad answer"); return null; }
   }
+  if (!lastAiError) lastAiError = "Gemini: no time left";
   return null;
 }
