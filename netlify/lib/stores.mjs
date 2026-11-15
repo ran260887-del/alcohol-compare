@@ -2,7 +2,7 @@
 import { decodeEntities, parseSize, compare } from "./match.mjs";
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
-const TIMEOUT_MS = 7000;
+const TIMEOUT_MS = 8000;
 
 async function get(url, opts = {}) {
   const res = await fetch(url, {
@@ -235,7 +235,7 @@ function naftali(origin) {
 
 export const STORES = [
   { id: "bana", name: "בנא משקאות", site: "https://www.banamashkaot.co.il", searchUrl: (q) => `https://www.banamashkaot.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://www.banamashkaot.co.il") },
-  { id: "importer", name: "היבואן", site: "https://www.the-importer.co.il", searchUrl: (q) => `https://www.the-importer.co.il/catalogsearch/result/?q=${encodeURIComponent(q)}`, search: magento("https://www.the-importer.co.il"), fallback: googleIndex("the-importer.co.il") },
+  { id: "importer", name: "היבואן", site: "https://www.the-importer.co.il", searchUrl: (q) => `https://www.the-importer.co.il/catalogsearch/result/?q=${encodeURIComponent(q)}`, search: magento("https://www.the-importer.co.il") },
   { id: "turki", name: "משקאות הטורקי", site: "https://www.haturki.com", searchUrl: (q) => `https://www.haturki.com/search-results?q=${encodeURIComponent(q)}`, searchByQuery: sitemapCatalog("https://www.haturki.com") },
   { id: "eliasi", name: "אליאסי", site: "https://www.eliasi.co.il", searchUrl: (q) => `https://www.eliasi.co.il/index.php?dir=site&page=search&q=${encodeURIComponent(q)}`, search: eliasi },
   { id: "winehouse", name: "בית היין", site: "https://winehouse.co.il", searchUrl: (q) => `https://winehouse.co.il/?s=${encodeURIComponent(q)}&post_type=product`, search: woo("https://winehouse.co.il") },

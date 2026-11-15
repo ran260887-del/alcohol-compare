@@ -19,20 +19,23 @@ export const BRANDS = [
   ["stoli", "סטולי", "סטוליצ'ניה", "stolichnaya"],
   ["ketel one", "קטל וואן"],
   ["johnnie walker", "גוני ווקר", "ג'וני ווקר", "גוני וולקר", "ג'וני וולקר"],
-  ["black label", "בלאק לייבל", "בלאק"],
+  ["black label", "בלאק לייבל", "בלק לייבל"],
   ["red label", "רד לייבל"],
+  ["blue label", "בלו לייבל"],
+  ["green label", "גרין לייבל"],
+  ["gold label", "גולד לייבל"],
+  ["double black", "דאבל בלאק"],
   ["jameson", "גיימסון", "ג'יימסון", "גמסון"],
   ["jack daniels", "גק דניאלס", "ג'ק דניאלס", "ג'ק דניאל'ס"],
   ["glenfiddich", "גלנפידיך"],
   ["glenlivet", "גלנליווט"],
   ["glenmorangie", "גלנמורנג'י", "גלנמורנגי"],
   ["macallan", "מקאלן", "מקלאן"],
-  ["chivas", "שיבס", "שיבאס"],
+  ["chivas", "שיבס", "שיבאס", "שיבס ריגל", "שיבאס ריגאל", "שיבס ריגאל", "chivas regal"],
   ["royal salute", "רויאל סלוט", "רויאל סאלוט"],
   ["dalmore", "דלמור"],
   ["balvenie", "בלוויני", "בלבני"],
   ["glendronach", "גלנדרונאך", "גלנדרונך"],
-  ["jw", "ג'וני", "גוני"],
   ["ballantines", "בלנטיינס", "בלנטיינז"],
   ["monkey shoulder", "מאנקי שולדר", "מונקי שולדר"],
   ["laphroaig", "לפרויג"],
@@ -80,6 +83,10 @@ export const BRANDS = [
   ["liqueur", "ליקר"],
   ["cognac", "קוניאק"],
 ];
+
+// A sub-brand is sold with or without its parent brand ("בלאק לייבל" = "ג'וני ווקר בלאק לייבל").
+const PARENT = { "black label": "johnnie walker", "red label": "johnnie walker", "blue label": "johnnie walker", "green label": "johnnie walker",
+  "gold label": "johnnie walker", "double black": "johnnie walker", "royal salute": "chivas" };
 
 // Words that describe the category or packaging; they never decide whether two bottles are the same.
 const GENERIC = new Set(["ליקר", "liqueur", "וודקה", "ודקה", "vodka", "וויסקי", "ויסקי", "whisky", "whiskey", "גין", "gin", "רום", "rum", "טקילה", "tequila",
@@ -160,7 +167,8 @@ function wordHit(q, list) {
   if (list.includes(q)) return true;
   if (q.startsWith("#")) return false;
   for (const w of list) {
-    if (w.startsWith("#")) continue;
+    // a plain word inside a multi-word brand ("בלאק" in "בלאק לייבל")
+    if (w.startsWith("#")) { if (q.length >= 3 && BRANDS[+w.slice(1)].some((sp) => sp.includes(" ") && norm(sp).split(" ").includes(q))) return true; continue; }
     if (q.length >= 4 && w.length >= 3 && /[א-ת]/.test(q) && skeleton(q) === skeleton(w)) return true;
     if (q.length >= 4 && (w.startsWith(q) || q.startsWith(w) && w.length >= 4)) return true;
     if (q.length >= 5 && lev(q, w) <= (q.length >= 8 ? 2 : 1)) return true;
@@ -192,7 +200,9 @@ export function compare(query, productName, productSizeMl) {
   let core = words(String(productName).split("+")[0]);
   const cut = core.findIndex((w, i) => i > 0 && isPackWord(w));
   if (cut > 0) core = core.slice(0, cut + 1);
-  const extras = core.filter((w) => !GENERIC.has(w) && !wordHit(w, qWords) && !qWords.some((q) => wordHit(q, [w])));
+  const parents = new Set(qWords.filter((w) => w.startsWith("#")).map((w) => PARENT[BRANDS[+w.slice(1)][0]]).filter(Boolean)
+    .map((p) => "#" + BRANDS.findIndex((g) => g[0] === p)));
+  const extras = core.filter((w) => !GENERIC.has(w) && !parents.has(w) && !wordHit(w, qWords) && !qWords.some((q) => wordHit(q, [w])));
   const extraNums = extras.filter((w) => /^\d+$/.test(w));
   const isPack = isPackWord;
   const extraWords = extras.filter((w) => !/^\d+(\.\d+)?$/.test(w) && w.length > 1 && !isPack(w));
