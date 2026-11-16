@@ -119,6 +119,7 @@ export function parseSize(s) {
   if ((m = t.match(/(\d+(?:\.\d+)?)\s*(?:ליטר|ל['׳]|lt|ltr|l)(?![a-zא-ת])/))) return Math.round(+m[1] * 1000);
   if (/ליטר|\bliter\b|\blitre\b/.test(t)) return 1000;
   if ((m = t.match(BARE_SIZE))) return +m[1]; // "ליקר ייגרמייסטר 700"
+  if (/(^|[\s(\-])(מיני|mini|miniature)($|[\s)\-])/.test(t)) return 50; // "ג'ין הנדריקס מיני"
   return null;
 }
 
@@ -241,5 +242,11 @@ export function searchTerms(query) {
   // single words catch other spellings of the rest ("רויאל" finds "רויאל סאלוט")
   const plain = raw.split(/\s+/).filter((w) => w.length >= 4 && !/^\d+$/.test(w) && !GENERIC.has(norm(w)));
   if (plain.length > 1) plain.sort((a, b) => b.length - a.length).forEach((w) => terms.add(w));
-  return [...terms].slice(0, 4);
+  // Store search boxes match text literally, so "בומביי" would miss a shop that wrote "בומבי".
+  // As a last resort search the start of the main word without doubled letters: "בומב" finds both.
+  const stem = (w) => w.replace(/['׳"״]/g, "").replace(/(יי|וו)/g, (m) => m[0]).slice(0, 4);
+  const main2 = plain.sort((a, b) => b.length - a.length)[0];
+  const out = [...terms].slice(0, 3);
+  if (main2 && main2.length >= 5 && !out.includes(stem(main2))) out.push(stem(main2));
+  return [...new Set(out.concat([...terms].slice(3)))].slice(0, 4);
 }
