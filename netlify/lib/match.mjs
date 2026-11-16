@@ -119,6 +119,7 @@ export function parseSize(s) {
   if ((m = t.match(/(\d+(?:\.\d+)?)\s*(?:ליטר|ל['׳]|lt|ltr|l)(?![a-zא-ת])/))) return Math.round(+m[1] * 1000);
   if (/ליטר|\bliter\b|\blitre\b/.test(t)) return 1000;
   if ((m = t.match(BARE_SIZE))) return +m[1]; // "ליקר ייגרמייסטר 700"
+  if (/(^|[\s(\-])(מיני|mini|miniature)($|[\s)\-])/.test(t)) return 50; // "ג'ין הנדריקס מיני"
   return null;
 }
 
