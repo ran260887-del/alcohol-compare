@@ -1,6 +1,6 @@
 // Runs one query against all stores and returns sorted, matched offers.
 import { STORES } from "./stores.mjs";
-import { compare, searchTerms, parseSize, words } from "./match.mjs";
+import { compare, searchTerms, parseSize, words, parseDeal, stripDeal } from "./match.mjs";
 import { aiClassify, aiConfigured, lastAiError, usedModels } from "./ai.mjs";
 
 // Collect raw products from one store (no matching decisions yet).
@@ -19,7 +19,13 @@ async function collect(s, query, terms) {
     if (!hit && terms.length > 2) await run(terms.slice(2));
   }
   if (!ok) return { store: s, status: lastError?.status === 403 ? "blocked" : "fail", error: String(lastError?.message || lastError), products: [] };
-  return { store: s, status: "ok", products: [...seen.values()] };
+  // Multi-buy deal in the name or label: match on the plain name, rank by the per-bottle deal price.
+  const products = [...seen.values()].map((p) => {
+    const deal = parseDeal(p.name) || parseDeal(p.promo);
+    if (!deal || !(deal.unit < p.price)) return p;
+    return { ...p, name: stripDeal(p.name), single_price: p.price, price: deal.unit, deal: `${deal.text} (₪${deal.unit} לבקבוק)` };
+  });
+  return { store: s, status: "ok", products };
 }
 
 // Size rule shared by both matchers.

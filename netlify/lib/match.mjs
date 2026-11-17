@@ -224,6 +224,21 @@ export function compare(query, productName, productSizeMl) {
   return { match: "exact", note: "" };
 }
 
+// Multi-buy deals written into names or labels: "2=150 ש"ח", "2 ב-150", "3 ב 100 ₪", "2 יח' ב-89.9".
+const DEAL = /(?:^|[\s(\-–|,])([2-6])\s*(?:יח['׳]?\s*|בקבוקים\s*)?(?:=|ב-?|ב\s*-\s*|ב)\s*₪?\s*(\d{2,4}(?:\.\d{1,2})?)\s*(?:ש["״]?ח|₪|שקל(?:ים)?)?(?=$|[\s)\-–|,!])/;
+export function parseDeal(text) {
+  const t = decodeEntities(text || "");
+  const m = t.match(DEAL);
+  if (!m) return null;
+  const qty = +m[1], total = +m[2];
+  if (total < qty * 5) return null; // "2 ב-1" style noise
+  return { qty, total, unit: Math.round((total / qty) * 100) / 100, text: `${qty} ב-₪${total}`, match: m[0] };
+}
+export function stripDeal(name) {
+  const d = parseDeal(name);
+  return d ? decodeEntities(name).replace(d.match, " ").replace(/\s+[-–|]\s*$/, "").replace(/\s+/g, " ").trim() : name;
+}
+
 // Search terms to send to store search boxes, which match text literally.
 export function searchTerms(query) {
   const raw = decodeEntities(stripSize(query)).replace(/\s+/g, " ").trim();

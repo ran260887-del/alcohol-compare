@@ -104,11 +104,12 @@ async function eliasi(term) {
     const href = (p.match(/class="products__info"\s+href="([^"]+)"/) || [])[1];
     const name = (p.match(/products__title_inner">\s*<p>([\s\S]*?)<\/p>/) || [])[1];
     const cap = (p.match(/extra-capacity-txt="([^"]*)"/) || [])[1];
+    const promo = [...p.matchAll(/class="[^"]*ribbon[^"]*"[^>]*>([\s\S]*?)<\/(?:div|span|p)>/g)].map((m) => decodeEntities(m[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim()).filter(Boolean).join(" | ");
     if (!price || !name) continue;
     const full = decodeEntities(name).replace(/<[^>]+>/g, "").trim();
     const soldOut = /אזל מהמלאי/.test(full);
     const clean = full.replace(/\s*-?\s*אזל מהמלאי\s*/, "").trim();
-    out.push({ name: clean, price: +price, regular_price: 0, size_ml: parseSize(decodeEntities(cap || "")) || parseSize(clean), in_stock: !soldOut,
+    out.push({ name: clean, promo, price: +price, regular_price: 0, size_ml: parseSize(decodeEntities(cap || "")) || parseSize(clean), in_stock: !soldOut,
       url: href ? origin + decodeEntities(href).replace(/^(?!\/)/, "/") : `${origin}/index.php?dir=site&page=search&q=${encodeURIComponent(term)}` });
   }
   return out;
