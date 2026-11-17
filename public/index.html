@@ -202,12 +202,14 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     items.forEach((it, i) => {
       const card = el("article", "item" + (i === 0 && it.match === "exact" ? " best" : ""));
       const price = el("div", "price", fmt(it.price));
-      if (it.regular_price > it.price) price.appendChild(el("span", "was", fmt(it.regular_price) + " לפני הנחה"));
+      if (it.deal) price.appendChild(el("span", "per", "במבצע " + it.deal.split(" (")[0] + " · בודד " + fmt(it.single_price)));
+      else if (it.regular_price > it.price) price.appendChild(el("span", "was", fmt(it.regular_price) + " לפני הנחה"));
       if (it.size_ml) price.appendChild(el("span", "per", fmt(Math.round(it.price / it.size_ml * 1000) / 10) + ' ל-100 מ"ל'));
       const st = el("div", "store"); st.appendChild(el("span", "sn", it.store));
       if (i === 0 && exact.length > 1 && it.match === "exact") st.appendChild(el("span", "pill best", "הכי זול"));
       st.appendChild(el("span", "pill " + (it.match === "exact" ? "exact" : "close"), it.match === "exact" ? "התאמה מלאה" : (it.note || "התאמה חלקית")));
-      if (it.regular_price > it.price) st.appendChild(el("span", "pill close", "במבצע"));
+      if (it.deal) st.appendChild(el("span", "pill best", "מבצע " + it.deal.split(" (")[0]));
+      else if (it.regular_price > it.price) st.appendChild(el("span", "pill close", "במבצע"));
       if (it.in_stock === false) st.appendChild(el("span", "pill out", "אזל מהמלאי"));
       if (it.via_google) st.appendChild(el("span", "pill close", "לפי גוגל, ייתכן שלא מעודכן"));
       const foot = el("div", "foot"); foot.appendChild(link(it.url, "לדף המוצר ←"));
